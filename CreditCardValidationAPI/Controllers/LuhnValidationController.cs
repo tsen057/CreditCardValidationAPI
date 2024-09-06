@@ -24,19 +24,30 @@ namespace CreditCardValidationAPI.Controllers
         /// <param name="cardNumber">String number of credit card</param>
         /// <returns></returns>
         [HttpPost]
-        [Route("validate")]
+        [Route("ValidateCreditCard")]
         public ActionResult<bool> ValidateCreditCard([FromBody] string cardNumber)
-        { 
-            if(string.IsNullOrWhiteSpace(cardNumber))
+        {
+            bool isValid = false;
+            try
             {
-                return BadRequest("Card number cannot is null/empty.");
+                if (string.IsNullOrWhiteSpace(cardNumber))
+                {
+                    return BadRequest("Card number cannot is null/empty.");
+                }
+                else if (!cardNumber.All(char.IsDigit))
+                {
+                    return BadRequest("Card number should have numbers only.");
+                }
+                else if (cardNumber.Length < 13 || cardNumber.Length > 19)
+                {
+                    return BadRequest(new { message = "Credit card number must be between 13 and 19 digits long." });
+                }
+                isValid = _luhnValidationService.ValidateCreditCard(cardNumber);
             }
-            else if (!cardNumber.All(char.IsDigit)) 
+            catch (Exception exception)
             {
-                return BadRequest("Card number should have numbers only.");
+                return StatusCode(500, new { message = "An unexpected error occurred. Please try again later."+exception });
             }
-            bool isValid = _luhnValidationService.ValidateCreditCard(cardNumber);
-
             return Ok(isValid);
         }
 
